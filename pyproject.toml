@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "agentia"
+version = "0.1.0"
+description = ""
+authors = ["marintosti12 <marintosti12@gmail.com>"]
+readme = "README.md"
+packages = [{include = "app", from = "backend"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115.6"
+uvicorn = {version = "^0.34.0", extras = ["standard"]}
+httpx = "^0.28.1"
+python-chess = "^1.999"
+stockfish = "^3.28.0"
+pydantic-settings = "^2.7.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+pytest-asyncio = "^0.24.0"
+pytest-cov = "^6.0.0"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["backend/tests"]
+addopts = "-v --tb=short"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
