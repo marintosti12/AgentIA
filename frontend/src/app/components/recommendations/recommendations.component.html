@@ -1,0 +1,87 @@
+<div class="recommendations-panel">
+  <!-- Evaluation -->
+  <section class="section">
+    <h3>Evaluation</h3>
+    @if (loadingEval) {
+      <div class="loading">Analyse en cours...</div>
+    } @else if (evaluation) {
+      <div class="eval-box" [class]="getEvalClass()">
+        <span class="eval-value">{{ getEvalDisplay() }}</span>
+        <span class="best-move">Meilleur coup : <strong>{{ evaluation.best_move_san }}</strong></span>
+        <span class="depth">Profondeur : {{ evaluation.depth }}</span>
+      </div>
+    } @else {
+      <div class="empty">Jouez un coup pour voir l'évaluation</div>
+    }
+  </section>
+
+  <!-- Opening info -->
+  @if (openingName) {
+    <section class="section">
+      <h3>Ouverture : {{ openingName }}</h3>
+    </section>
+  }
+
+  <!-- Suggested moves -->
+  <section class="section">
+    <h3>Coups suggérés</h3>
+    @if (loadingMoves) {
+      <div class="loading">Chargement...</div>
+    } @else if (moves.length > 0) {
+      <div class="moves-list">
+        @for (move of moves; track move.uci; let i = $index) {
+          <div class="move-item">
+            <div class="move-header">
+              <span class="move-rank">#{{ i + 1 }}</span>
+              <span class="move-san">{{ move.san }}</span>
+              <span class="move-games">{{ move.total_games | number }} parties</span>
+            </div>
+            <div class="win-bar">
+              <div class="win-white" [style.width.%]="getWinRate(move).white"
+                   title="Blancs {{ getWinRate(move).white }}%">
+              </div>
+              <div class="win-draw" [style.width.%]="getWinRate(move).draw"
+                   title="Nulles {{ getWinRate(move).draw }}%">
+              </div>
+              <div class="win-black" [style.width.%]="getWinRate(move).black"
+                   title="Noirs {{ getWinRate(move).black }}%">
+              </div>
+            </div>
+            <div class="win-labels">
+              <span>{{ getWinRate(move).white }}%</span>
+              <span>{{ getWinRate(move).draw }}%</span>
+              <span>{{ getWinRate(move).black }}%</span>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty">Aucun coup connu pour cette position</div>
+    }
+  </section>
+
+  <!-- Context RAG -->
+  <section class="section">
+    <h3>Contexte</h3>
+    @if (loadingSearch) {
+      <div class="loading">Recherche en cours...</div>
+    } @else if (searchResults.length > 0) {
+      <div class="context-list">
+        @for (result of searchResults; track result.title) {
+          <div class="context-item">
+            <div class="context-title">{{ result.opening_name }}</div>
+            <p class="context-chunk">{{ result.chunk }}</p>
+            <span class="context-score">Pertinence : {{ (result.score * 100).toFixed(0) }}%</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty">Jouez quelques coups pour obtenir du contexte</div>
+    }
+  </section>
+
+  <!-- Error -->
+  @if (error) {
+    <div class="error-box">{{ error }}</div>
+  }
+</div>

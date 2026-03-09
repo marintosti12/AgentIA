@@ -4,15 +4,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import router as v1_router
-from app.services import lichess_service, stockfish_service
+from app.services import lichess_service, milvus_service, stockfish_service, youtube_service
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     stockfish_service.init_engine()
+    milvus_service.init_milvus()
+    youtube_service.init_youtube()
     yield
     stockfish_service.shutdown_engine()
     await lichess_service.close_client()
+    milvus_service.close_milvus()
 
 
 app = FastAPI(

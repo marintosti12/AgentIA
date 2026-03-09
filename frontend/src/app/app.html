@@ -1,0 +1,31 @@
+<div class="app-container">
+  <header class="app-header">
+    <h1>Agent IA Echecs - FFE</h1>
+    <p>Apprentissage des ouvertures aux échecs</p>
+  </header>
+
+  <main class="app-main">
+    <div class="left-panel">
+      <app-chessboard (moveChange)="onFenChange($event)"></app-chessboard>
+    </div>
+
+    <div class="right-panel">
+      <app-recommendations
+        [moves]="moves"
+        [evaluation]="evaluation"
+        [searchResults]="searchResults"
+        [openingName]="openingName"
+        [loadingMoves]="loadingMoves"
+        [loadingEval]="loadingEval"
+        [loadingSearch]="loadingSearch"
+        [error]="error"
+      ></app-recommendations>
+
+      <app-video-panel
+        [videos]="videos"
+        [loading]="loadingVideos"
+        [openingName]="openingName"
+      ></app-video-panel>
+    </div>
+  </main>
+</div>

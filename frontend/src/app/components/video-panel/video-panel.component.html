@@ -1,0 +1,43 @@
+<div class="video-panel">
+  <h3>Videos explicatives</h3>
+
+  @if (loading) {
+    <div class="loading">Recherche de vidéos...</div>
+  } @else if (videos.length === 0) {
+    <div class="empty">Jouez quelques coups pour découvrir des vidéos</div>
+  } @else {
+    <!-- Embedded player -->
+    @if (selectedVideo) {
+      <div class="video-player">
+        <iframe
+          [src]="getEmbedUrl(selectedVideo)"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+        <div class="player-title">{{ selectedVideo.title }}</div>
+      </div>
+    }
+
+    <!-- Video list -->
+    <div class="video-list">
+      @for (video of videos; track video.video_id) {
+        <div
+          class="video-card"
+          [class.active]="selectedVideo?.video_id === video.video_id"
+          (click)="selectVideo(video)"
+        >
+          <img [src]="video.thumbnail" [alt]="video.title" class="video-thumb" />
+          <div class="video-info">
+            <div class="video-title">{{ video.title }}</div>
+            <div class="video-meta">
+              <span>{{ video.channel }}</span>
+              <span>{{ formatDuration(video.duration) }}</span>
+              <span>{{ formatViews(video.view_count) }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

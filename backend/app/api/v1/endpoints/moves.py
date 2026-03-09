@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from app.models.chess_models import MovesResponse, MoveStats
 from app.services import lichess_service
@@ -7,8 +7,8 @@ from app.utils.fen_validator import validate_fen
 router = APIRouter()
 
 
-@router.get("/moves/{fen:path}", response_model=MovesResponse)
-async def get_moves(fen: str):
+@router.get("/moves", response_model=MovesResponse)
+async def get_moves(fen: str = Query(..., description="Position FEN")):
     _ = validate_fen(fen)
     data = await lichess_service.get_opening_moves(fen)
 
@@ -27,7 +27,6 @@ async def get_moves(fen: str):
             )
         )
 
-    # Tri par nombre de parties décroissant (coups les plus joués en premier)
     moves.sort(key=lambda m: m.total_games, reverse=True)
 
     total_games = sum(m.total_games for m in moves)

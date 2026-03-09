@@ -1,0 +1,24 @@
+<div class="chessboard-container">
+  <ngx-chess-board
+    #board
+    [size]="520"
+    (moveChange)="onMoveChange($event)"
+  ></ngx-chess-board>
+
+  <div class="board-controls">
+    <button (click)="reset()" title="Nouvelle partie">
+      &#x21bb; Nouvelle partie
+    </button>
+    <button (click)="undo()" title="Annuler le coup">
+      &#x2190; Annuler
+    </button>
+    <button (click)="reverse()" title="Retourner l'échiquier">
+      &#x21c5; Retourner
+    </button>
+  </div>
+
+  <div class="fen-display">
+    <strong>FEN :</strong>
+    <code>{{ currentFen }}</code>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+.chessboard-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.board-controls {
+  display: flex;
+  gap: 8px;
+
+  button {
+    padding: 8px 16px;
+    border: 1px solid #555;
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #3a3a3a;
+    }
+  }
+}
+
+.fen-display {
+  background: #1a1a1a;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #aaa;
+  max-width: 520px;
+  word-break: break-all;
+
+  code {
+    color: #4fc3f7;
+    margin-left: 6px;
+  }
+}
