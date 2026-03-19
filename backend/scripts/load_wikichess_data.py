@@ -1,19 +1,7 @@
-"""
-Script pour charger des données Wikichess sur les ouvertures d'échecs dans Milvus.
-
-Usage (depuis le conteneur backend ou en local):
-    python -m scripts.load_wikichess_data
-
-Prérequis:
-    - Milvus doit être accessible (docker-compose up milvus)
-    - Les dépendances pymilvus et sentence-transformers doivent être installées
-"""
-
 import logging
 import os
 import sys
 
-# Ajouter le dossier parent pour les imports app.*
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.services.milvus_service import init_milvus, insert_documents, close_milvus
@@ -21,7 +9,6 @@ from app.services.milvus_service import init_milvus, insert_documents, close_mil
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Données Wikichess sur les ouvertures les plus populaires
 WIKICHESS_OPENINGS = [
     {
         "title": "Ouverture italienne",
@@ -131,7 +118,6 @@ WIKICHESS_OPENINGS = [
 
 
 def chunk_text(text: str, max_chunk_size: int = 500) -> list[str]:
-    """Découpe un texte long en morceaux plus petits."""
     if len(text) <= max_chunk_size:
         return [text]
 

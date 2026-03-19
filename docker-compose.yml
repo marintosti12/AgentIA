@@ -15,6 +15,19 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  data-loader:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: chess-agent-data-loader
+    env_file:
+      - .env
+    command: ["python", "scripts/load_wikichess_data.py"]
+    depends_on:
+      milvus:
+        condition: service_healthy
+    restart: "no"
+
   frontend:
     build:
       context: ./frontend
@@ -86,7 +99,22 @@ services:
       retries: 3
     restart: unless-stopped
 
+  mongodb:
+    container_name: chess-agent-mongodb
+    image: mongo:7
+    ports:
+      - "${MONGODB_PORT:-27017}:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
 volumes:
   etcd_data:
   minio_data:
   milvus_data:
+  mongodb_data:
