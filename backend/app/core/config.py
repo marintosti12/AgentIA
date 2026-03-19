@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     youtube_api_key: str = ""
     youtube_max_results: int = 5
 
+    mongodb_host: str = "chess-agent-mongodb"
+    mongodb_port: int = 27017
+    mongodb_database: str = "chess_agent"
+
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 

@@ -59,6 +59,13 @@ export interface VideosResponse {
   videos: VideoResult[];
 }
 
+export interface AgentAnalysis {
+  fen: string;
+  response: string;
+  tools_used: string[];
+  opening_name: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -87,5 +94,10 @@ export class ChessApiService {
   getVideos(opening: string, maxResults: number = 3): Observable<VideosResponse> {
     const params = new HttpParams().set('max_results', maxResults.toString());
     return this.http.get<VideosResponse>(`${this.baseUrl}/videos/${encodeURIComponent(opening)}`, { params });
+  }
+
+  analyzePosition(fen: string): Observable<AgentAnalysis> {
+    const params = new HttpParams().set('fen', fen);
+    return this.http.post<AgentAnalysis>(`${this.baseUrl}/agent/analyze`, null, { params });
   }
 }

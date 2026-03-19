@@ -14,12 +14,18 @@ Cet agent intelligent accompagne les jeunes espoirs dans l'apprentissage des ouv
 ```mermaid
 graph TB
     USER["Utilisateur"] --> FRONT["Frontend Angular<br/>ngx-chessboard<br/>:4200"]
-    FRONT -->|"API REST"| BACK["Backend FastAPI<br/>Agent LangGraph<br/>:8000"]
-    BACK --> SF["Stockfish<br/>Evaluation position"]
-    BACK --> LI["API Lichess<br/>Bibliotheque ouvertures"]
-    BACK --> YT["API YouTube<br/>Videos explicatives"]
-    BACK --> MILVUS[("Milvus :19530<br/>Recherche vectorielle<br/>Donnees Wikichess")]
-    BACK --> MONGO[("MongoDB :27017<br/>Base de donnees")]
+    FRONT -->|"POST /agent/analyze"| AGENT["Agent LangGraph<br/>(StateGraph + LLM)"]
+
+    subgraph BACK["Backend FastAPI :8000"]
+        AGENT -->|"Tool call"| SF["Stockfish<br/>evaluate_position"]
+        AGENT -->|"Tool call"| LI["Lichess<br/>get_opening_moves"]
+        AGENT -->|"Tool call"| WIKI["Milvus RAG<br/>search_opening_context"]
+        AGENT -->|"Tool call"| YT["YouTube<br/>search_youtube_videos"]
+        AGENT -->|"Sauvegarde"| MONGO_SVC["MongoDB Service"]
+    end
+
+    WIKI --> MILVUS[("Milvus :19530<br/>Donnees Wikichess")]
+    MONGO_SVC --> MONGO[("MongoDB :27017<br/>Historique analyses")]
     MILVUS --- ETCD["etcd"]
     MILVUS --- MINIO["MinIO"]
 ```
@@ -36,6 +42,7 @@ graph TB
 
 - **Docker** >= 20.10 et **Docker Compose** >= 2.0
 - **Git**
+- Une **cle API OpenAI** (pour l'agent LangGraph - GPT-4o-mini)
 - Une **cle API YouTube** (Google Cloud Console → YouTube Data API v3)
 - *(Optionnel)* Un token Lichess pour augmenter les limites de requetes
 
@@ -57,6 +64,9 @@ cp .env.example .env
 Editez le fichier `.env` et renseignez vos cles API :
 
 ```env
+# Cle API OpenAI (obligatoire - agent LangGraph)
+OPENAI_API_KEY=votre_cle_openai_ici
+
 # Cle API YouTube (obligatoire)
 YOUTUBE_API_KEY=votre_cle_youtube_ici
 
@@ -107,11 +117,13 @@ curl http://localhost:8000/api/v1/healthcheck
 1. Ouvrez http://localhost:4200 dans votre navigateur
 2. L'echiquier interactif s'affiche avec la position de depart
 3. Jouez un coup en deplacant une piece sur l'echiquier
-4. L'agent IA repond automatiquement avec :
-   - Les **coups recommandes** par la theorie (statistiques de victoire/defaite/nulle)
-   - Le **contexte de l'ouverture** via la recherche semantique Wikichess
-   - L'**evaluation Stockfish** de la position
-   - Des **videos YouTube** pertinentes pour approfondir
+4. L'**agent LangGraph** analyse la position et decide quels outils appeler :
+   - **Lichess** : coups les plus joues avec statistiques
+   - **Wikichess (Milvus)** : contexte et theorie de l'ouverture
+   - **Stockfish** : evaluation si la position sort de la theorie
+   - **YouTube** : videos explicatives si l'ouverture est identifiee
+5. L'agent synthetise une **reponse en langage naturel** pour guider le joueur
+6. L'analyse est **sauvegardee dans MongoDB** pour l'historique
 
 ## Positions de demonstration
 
@@ -130,6 +142,8 @@ Voici quelques ouvertures interessantes a jouer pour tester l'agent :
 | Methode | Endpoint | Description | Parametres |
 |---------|----------|-------------|------------|
 | GET | `/api/v1/healthcheck` | Verification de l'etat du service | - |
+| **POST** | **`/api/v1/agent/analyze`** | **Analyse complete par l'agent LangGraph** | **`fen` (string)** |
+| GET | `/api/v1/agent/history` | Historique des analyses (MongoDB) | `limit` (int) |
 | GET | `/api/v1/moves` | Coups recommandes pour une position | `fen` (string) |
 | GET | `/api/v1/evaluate` | Evaluation Stockfish d'une position | `fen` (string) |
 | GET | `/api/v1/vector-search` | Recherche semantique dans Wikichess | `query` (string), `top_k` (int) |
@@ -144,9 +158,13 @@ AgentIA/
 │   │   ├── main.py                    # Point d'entree FastAPI + lifespan
 │   │   ├── core/
 │   │   │   └── config.py              # Configuration (variables d'environnement)
+│   │   ├── agent/
+│   │   │   ├── graph.py               # Agent LangGraph (StateGraph + orchestration)
+│   │   │   └── tools.py               # Outils LangChain (Stockfish, Lichess, Milvus, YouTube)
 │   │   ├── api/v1/
 │   │   │   ├── router.py              # Routeur principal
 │   │   │   └── endpoints/
+│   │   │       ├── agent.py           # Endpoint agent IA (analyse + historique)
 │   │   │       ├── moves.py           # Endpoint coups (Lichess)
 │   │   │       ├── evaluate.py        # Endpoint evaluation (Stockfish)
 │   │   │       ├── vector_search.py   # Endpoint recherche semantique (Milvus)
@@ -155,7 +173,8 @@ AgentIA/
 │   │   │   ├── lichess_service.py     # Client API Lichess
 │   │   │   ├── stockfish_service.py   # Interface moteur Stockfish
 │   │   │   ├── milvus_service.py      # Client base vectorielle Milvus
-│   │   │   └── youtube_service.py     # Client API YouTube
+│   │   │   ├── youtube_service.py     # Client API YouTube
+│   │   │   └── mongodb_service.py     # Client MongoDB (historique analyses)
 │   │   ├── models/
 │   │   │   └── chess_models.py        # Modeles Pydantic (requetes/reponses)
 │   │   └── utils/
@@ -256,6 +275,9 @@ docker compose down -v
 | `STOCKFISH_DEPTH` | Profondeur d'analyse Stockfish | `20` |
 | `YOUTUBE_API_KEY` | Cle API YouTube Data v3 | *(obligatoire)* |
 | `LICHESS_TOKEN` | Token API Lichess | *(optionnel)* |
+| `OPENAI_API_KEY` | Cle API OpenAI (agent LangGraph) | *(obligatoire)* |
+| `OPENAI_MODEL` | Modele OpenAI utilise | `gpt-4o-mini` |
+| `MONGODB_HOST` | Hote MongoDB | `chess-agent-mongodb` |
 
 ## Depannage
 
@@ -263,6 +285,7 @@ docker compose down -v
 |----------|----------|
 | Milvus ne demarre pas | Verifier que les ports 19530 et 9091 sont libres. Augmenter la RAM Docker a 4 Go minimum. |
 | `data-loader` en erreur | Verifier les logs : `docker compose logs data-loader`. S'assurer que Milvus est healthy avant le lancement. |
+| Agent IA ne repond pas | Verifier que `OPENAI_API_KEY` est renseignee dans `.env`. Consulter les logs : `docker compose logs backend`. |
 | Pas de videos YouTube | Verifier que `YOUTUBE_API_KEY` est renseignee dans `.env` et que le quota API n'est pas depasse. |
 | Frontend affiche une page blanche | Verifier les logs : `docker compose logs frontend`. S'assurer que le build Angular a reussi. |
 | Coups non affiches | Verifier la connectivite vers l'API Lichess : `curl https://explorer.lichess.ovh/lichess?fen=rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR` |

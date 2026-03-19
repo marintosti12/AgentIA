@@ -9,6 +9,7 @@ import {
   EvaluationResponse,
   SearchResult,
   VideoResult,
+  AgentAnalysis,
 } from './services/chess-api.service';
 
 @Component({
@@ -28,6 +29,7 @@ export class App {
   evaluation: EvaluationResponse | null = null;
   searchResults: SearchResult[] = [];
   videos: VideoResult[] = [];
+  agentAnalysis: AgentAnalysis | null = null;
   openingName = '';
   error = '';
 
@@ -35,6 +37,7 @@ export class App {
   loadingEval = false;
   loadingSearch = false;
   loadingVideos = false;
+  loadingAgent = false;
 
   private lastOpeningName = '';
 
@@ -50,6 +53,7 @@ export class App {
     this.fetchMoves(fen);
     this.fetchEvaluation(fen);
     this.fetchOpeningContext(fen);
+    this.fetchAgentAnalysis(fen);
   }
 
   private fetchMoves(fen: string): void {
@@ -112,6 +116,25 @@ export class App {
       error: () => {
         this.videos = [];
         this.loadingVideos = false;
+      },
+    });
+  }
+
+  private fetchAgentAnalysis(fen: string): void {
+    this.loadingAgent = true;
+    this.chessApi.analyzePosition(fen).subscribe({
+      next: (res) => {
+        this.agentAnalysis = res;
+        this.loadingAgent = false;
+        if (res.opening_name && res.opening_name !== this.lastOpeningName) {
+          this.openingName = res.opening_name;
+          this.lastOpeningName = res.opening_name;
+          this.fetchVideos(res.opening_name);
+        }
+      },
+      error: () => {
+        this.agentAnalysis = null;
+        this.loadingAgent = false;
       },
     });
   }

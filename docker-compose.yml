@@ -13,6 +13,8 @@ services:
     depends_on:
       milvus:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
     restart: unless-stopped
 
   data-loader:

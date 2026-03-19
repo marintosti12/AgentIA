@@ -10,6 +10,17 @@
     </div>
 
     <div class="right-panel">
+      <div class="agent-panel" *ngIf="loadingAgent || agentAnalysis">
+        <h3>Coach IA</h3>
+        <div *ngIf="loadingAgent" class="loading">Analyse en cours...</div>
+        <div *ngIf="agentAnalysis && !loadingAgent" class="agent-response">
+          <div class="agent-text" [innerText]="agentAnalysis.response"></div>
+          <div class="agent-meta">
+            <span class="tools-badge" *ngFor="let tool of agentAnalysis.tools_used">{{ tool }}</span>
+          </div>
+        </div>
+      </div>
+
       <app-recommendations
         [moves]="moves"
         [evaluation]="evaluation"
